@@ -11,9 +11,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-public interface ElasticsearchRepository {
+public interface ElasticsearchRepository extends PagingAndSortingElasticsearchRepository {
 
-    <T> HitsMetadata<T> getAll(@NotBlank String indexName, @NotNull PageRequest pageRequest, @NotNull Class<T> clazz);
+    default <T> HitsMetadata<T> getAll(@NotBlank String indexName, @NotNull Class<T> clazz) {
+        return getAll(indexName, PageRequest.of(0, 100), clazz);
+    }
 
     default <T> Optional<T> getById(@NotBlank String indexName, @NotBlank String id, Class<T> clazz) {
         return getById(indexName, id, Collections.emptyList(), clazz);

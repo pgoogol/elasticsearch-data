@@ -2,12 +2,14 @@ package com.pgoogol.elasticsearch.data.repository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.InlineGet;
 import co.elastic.clients.elasticsearch._types.query_dsl.IdsQuery;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
 import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
@@ -32,7 +34,6 @@ public class ElasticsearchRepositoryImpl implements ElasticsearchRepository, Ela
         this.client = client;
     }
 
-    //todo separate interface for pagination and sortable like in data jpa
     @Override
     @SneakyThrows({IOException.class, ElasticsearchException.class})
     public <T> HitsMetadata<T> getAll(String indexName, PageRequest pageRequest, Class<T> clazz) {
@@ -137,7 +138,9 @@ public class ElasticsearchRepositoryImpl implements ElasticsearchRepository, Ela
                 Class<T> clazz = (Class<T>) items.get(0).getClass();
                 return bulk.items()
                         .stream()
-                        .map(bulkResponseItem -> bulkResponseItem.get().source())
+                        .map(BulkResponseItem::get)
+                        .filter(Objects::nonNull)
+                        .map(InlineGet::source)
                         .map(stringJsonDataMap -> mapper.convertValue(stringJsonDataMap, clazz))
                         .collect(Collectors.toList());
             } else {
