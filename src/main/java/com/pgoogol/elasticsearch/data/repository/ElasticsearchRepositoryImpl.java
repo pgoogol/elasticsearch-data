@@ -160,11 +160,14 @@ public class ElasticsearchRepositoryImpl implements ElasticsearchRepository, Ela
         return chunkList;
     }
 
-    //todo prepare fix mapping dictionary
     @Override
     @SneakyThrows({IOException.class, ElasticsearchException.class})
-    public boolean create(String dictionaryName) {
-        CreateIndexResponse createIndexResponse = client.indices().create(builder -> builder.index(dictionaryName));
+    public boolean create(String dictionaryName, List<IndexModel> modelDictionary) {
+        CreateIndexRequest.Builder request = new CreateIndexRequest.Builder().index(dictionaryName);
+        if (!modelDictionary.isEmpty()) {
+            request.mappings(builder -> builder.properties(MappingIndexUtils.prepareMapping(modelDictionary)));
+        }
+        CreateIndexResponse createIndexResponse = client.indices().create(request.build());
         return createIndexResponse.acknowledged();
     }
 
