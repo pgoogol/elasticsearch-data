@@ -11,9 +11,7 @@ public interface MappingIndexUtils {
 
     static Map<String, Property> prepareMapping(List<IndexModel> indexModels) {
         Map<String, Property> propertyMap = new HashMap<>();
-        indexModels.forEach(indexModel -> {
-            propertyMap.put(indexModel.getField(), prepareProperty(indexModel));
-        });
+        indexModels.forEach(indexModel -> propertyMap.put(indexModel.getField(), prepareProperty(indexModel)));
         return propertyMap;
     }
 

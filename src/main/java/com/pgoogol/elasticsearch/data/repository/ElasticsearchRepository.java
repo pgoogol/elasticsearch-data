@@ -1,7 +1,6 @@
 package com.pgoogol.elasticsearch.data.repository;
 
 import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
-import org.springframework.data.domain.PageRequest;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
