@@ -12,10 +12,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public interface ElasticsearchRepository extends PagingAndSortingElasticsearchRepository {
-
-    default <T> HitsMetadata<T> getAll(@NotBlank String indexName, @NotNull Class<T> clazz) {
-        return getAll(indexName, PageRequest.of(0, 100), clazz);
-    }
+    <T> HitsMetadata<T> getAll(@NotBlank String indexName, @NotNull Class<T> clazz);
 
     default <T> Optional<T> getById(@NotBlank String indexName, @NotBlank String id, Class<T> clazz) {
         return getById(indexName, id, Collections.emptyList(), clazz);
@@ -25,7 +22,9 @@ public interface ElasticsearchRepository extends PagingAndSortingElasticsearchRe
         return getById(indexName, id, Collections.singletonList(field), clazz);
     }
 
-    default <T> Optional<T> getById(@NotBlank String indexName, @NotBlank String id, @NotNull List<String> fields, Class<T> clazz) {
+    default <T> Optional<T> getById(@NotBlank String indexName, @NotBlank String id,
+                                    @NotNull List<String> fields, Class<T> clazz
+    ) {
         return getByIds(indexName, Collections.singletonList(id), fields, clazz).map(ts -> ts.get(0));
     }
 
@@ -33,7 +32,9 @@ public interface ElasticsearchRepository extends PagingAndSortingElasticsearchRe
         return getByIds(indexName, ids, Collections.emptyList(), clazz);
     }
 
-    <T> Optional<List<T>> getByIds(@NotBlank String indexName, @NotBlank List<String> ids, @NotNull List<String> fields, Class<T> clazz);
+    <T> Optional<List<T>> getByIds(
+        @NotBlank String indexName, @NotBlank List<String> ids, @NotNull List<String> fields, Class<T> clazz
+    );
 
     boolean existsById(@NotBlank String indexName, @NotBlank String id);
 
@@ -46,5 +47,7 @@ public interface ElasticsearchRepository extends PagingAndSortingElasticsearchRe
     default void delete(@NotBlank String indexName, @NotEmpty String id) {
         delete(indexName, Collections.singletonList(id));
     }
+
     void delete(@NotBlank String indexName, @NotEmpty List<String> id);
+
 }

@@ -12,9 +12,11 @@ import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
+import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pgoogol.elasticsearch.data.model.IndexModel;
 import lombok.SneakyThrows;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
@@ -24,6 +26,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.pgoogol.elasticsearch.data.repository.QueryBuilderFunction.FIELDS_REQUEST_FUNCTION;
+import static com.pgoogol.elasticsearch.data.repository.QueryBuilderFunction.PAGE_REQUEST_REQUEST_FUNCTION;
 
 @Repository
 public class ElasticsearchRepositoryImpl implements ElasticsearchRepository, ElasticsearchIndiciesRepository {
@@ -35,23 +40,35 @@ public class ElasticsearchRepositoryImpl implements ElasticsearchRepository, Ela
     }
 
     @Override
-    @SneakyThrows({IOException.class, ElasticsearchException.class})
-    public <T> HitsMetadata<T> getAll(String indexName, PageRequest pageRequest, Class<T> clazz) {
-        SearchRequest request = new SearchRequest
-                .Builder()
-                .index(indexName)
-                .from(pageRequest.getPageNumber() * pageRequest.getPageSize())
-                .size(pageRequest.getPageSize())
-                .build();
-
-        SearchResponse<T> search = client.search(request, clazz);
-        return search.hits();
+    public <T> HitsMetadata<T> getAll(String indexName, Class<T> clazz) {
+        return getAll(indexName, PageRequest.of(DEFAULT_PAGE, DEFAULT_PAGE_SIZE), clazz);
     }
 
     @Override
     @SneakyThrows({IOException.class, ElasticsearchException.class})
-    public <T> Optional<List<T>> getByIds(String indexName, List<String> ids, @NotNull List<String> fields, Class<T> clazz) {
-        SearchRequest.Builder query = new SearchRequest
+    public <T> HitsMetadata<T> getAll(String indexName, PageRequest pageRequest, Class<T> clazz) {
+        SearchRequest.Builder builder = new SearchRequest
+                .Builder()
+                .index(indexName);
+
+        PAGE_REQUEST_REQUEST_FUNCTION.apply(pageRequest, builder);
+
+        SearchResponse<T> search = client.search(builder.build(), clazz);
+        return search.hits();
+    }
+
+    @Override
+    public <T> Optional<List<T>> getByIds(String indexName, List<String> ids, List<String> fields, Class<T> clazz) {
+        return getByIds(indexName, ids, fields, PageRequest.of(DEFAULT_PAGE, DEFAULT_PAGE_SIZE), clazz);
+    }
+
+    @Override
+    @SneakyThrows({IOException.class, ElasticsearchException.class})
+    public <T> Optional<List<T>> getByIds(String indexName, List<String> ids,
+                                          @NotNull List<String> fields, PageRequest pageRequest,
+                                          Class<T> clazz
+    ) {
+        SearchRequest.Builder builder = new SearchRequest
                 .Builder()
                 .index(indexName)
                 .query(qb -> qb
@@ -60,15 +77,12 @@ public class ElasticsearchRepositoryImpl implements ElasticsearchRepository, Ela
                                 .values(ids)
                         )
                 );
-        setFields(fields, query);
-        SearchResponse<T> search = client.search(query.build(), clazz);
-        return Optional.of(search.hits().hits().stream().map(Hit::source).collect(Collectors.toList()));
-    }
 
-    private void setFields(List<String> fields, SearchRequest.Builder queryBuilder) {
-        if (!fields.isEmpty()) {
-            queryBuilder.source(builder -> builder.filter(builder1 -> builder1.includes(fields)));
-        }
+        PAGE_REQUEST_REQUEST_FUNCTION.apply(pageRequest, builder);
+        FIELDS_REQUEST_FUNCTION.apply(fields, builder);
+
+        SearchResponse<T> search = client.search(builder.build(), clazz);
+        return Optional.of(search.hits().hits().stream().map(Hit::source).collect(Collectors.toList()));
     }
 
     @Override
