@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +38,7 @@ public interface ElasticsearchRepository extends PagingAndSortingElasticsearchRe
 
     boolean existsById(@NotBlank String indexName, @NotBlank String id);
 
-    <T> List<T> saveAll(@NotBlank String indexName, Function<T, String> id, List<T> document);
+    <T> List<T> saveAll(@NotBlank String indexName, Function<T, String> id, List<T> document) throws IOException;
 
     <T> T save(@NotBlank String indexName, @NotBlank String id, T document);
 

@@ -132,9 +132,8 @@ public class ElasticsearchRepositoryImpl implements ElasticsearchRepository, Ela
     }
 
     @Override
-    @SneakyThrows({IOException.class, ElasticsearchException.class})
-    public <T> List<T> saveAll(String indexName, Function<T, String> id, List<T> items) {//todo handle bulk error
-            if (items.size() <= 20000) {
+    public <T> List<T> saveAll(String indexName, Function<T, String> id, List<T> items) throws IOException {
+            if (items.size() <= 10000) {
                 List<BulkOperation> bulkOperations = new ArrayList<>();
                 items.forEach(
                         item -> bulkOperations.add(
@@ -168,8 +167,8 @@ public class ElasticsearchRepositoryImpl implements ElasticsearchRepository, Ela
 
     private <T> List<List<T>> partitionListBasedOnSize(List<T> items) {
         List<List<T>> chunkList = new LinkedList<>();
-        for (int i = 0; i < items.size(); i += 20000) {
-            chunkList.add(items.subList(i, i + 20000 >= items.size() ? items.size() - 1 : i + 20000));
+        for (int i = 0; i < items.size(); i += 10000) {
+            chunkList.add(items.subList(i, i + 10000 >= items.size() ? items.size() - 1 : i + 10000));
         }
         return chunkList;
     }
