@@ -18,7 +18,7 @@ public class IndexModel {
 
     private String fieldType;
 
-    private List<IndexModel> items = Collections.emptyList();
+    private List<IndexModel> items;
 
-    private List<IndexModel> properties = Collections.emptyList();
+    private List<IndexModel> properties;
 }
